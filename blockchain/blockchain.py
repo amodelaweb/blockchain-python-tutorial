@@ -9,9 +9,9 @@ usage           : python blockchain.py
                   python blockchain.py -p 5000
                   python blockchain.py --port 5000
 python_version  : 3.6.1
-Comments        : The blockchain implementation is mostly based on [1]. 
-                  I made a few modifications to the original code in order to add RSA encryption to the transactions 
-                  based on [2], changed the proof of work algorithm, and added some Flask routes to interact with the 
+Comments        : The blockchain implementation is mostly based on [1].
+                  I made a few modifications to the original code in order to add RSA encryption to the transactions
+                  based on [2], changed the proof of work algorithm, and added some Flask routes to interact with the
                   blockchain from the dashboards
 References      : [1] https://github.com/dvf/blockchain/blob/master/blockchain.py
                   [2] https://github.com/julienr/ipynb_playground/blob/master/bitcoin/dumbcoin/dumbcoin.ipynb
@@ -47,7 +47,7 @@ MINING_DIFFICULTY = 2
 class Blockchain:
 
     def __init__(self):
-        
+
         self.transactions = []
         self.chain = []
         self.nodes = set()
@@ -55,6 +55,7 @@ class Blockchain:
         self.node_id = str(uuid4()).replace('-', '')
         #Create genesis block
         self.create_block(0, '00')
+        self.mine_stop = False
 
 
     def register_node(self, node_url):
@@ -87,7 +88,7 @@ class Blockchain:
         """
         Add a transaction to transactions array if the signature verified
         """
-        transaction = OrderedDict({'sender_address': sender_address, 
+        transaction = OrderedDict({'sender_address': sender_address,
                                     'recipient_address': recipient_address,
                                     'value': value})
 
@@ -128,7 +129,7 @@ class Blockchain:
         """
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
         block_string = json.dumps(block, sort_keys=True).encode()
-        
+
         return hashlib.sha256(block_string).hexdigest()
 
 
@@ -140,7 +141,7 @@ class Blockchain:
         last_hash = self.hash(last_block)
 
         nonce = 0
-        while self.valid_proof(self.transactions, last_hash, nonce) is False:
+        while (self.mine_stop is False) and (self.valid_proof(self.transactions, last_hash, nonce)  is False):
             nonce += 1
 
         return nonce
@@ -269,10 +270,29 @@ def full_chain():
     }
     return jsonify(response), 200
 
+@app.route('/stop_mine', methods['POST'])
+def stop_mine():
+    blockchain.mine_stop = True
+    response = {
+        'message' : "ok"
+    }
+    return jsonify(response), 200
+
+@app.route('/notify_complete', methods=['GET'])
+def notify_complete():
+    nodes = list(blockchain.nodes)
+    for node in nodes:
+        request.post('http://'+node+'/stop_mine')
+    response = {
+        'message' : "ok"
+    }
+    return jsonify(response), 200
+
 @app.route('/mine', methods=['GET'])
 def mine():
     # We run the proof of work algorithm to get the next proof...
     last_block = blockchain.chain[-1]
+    blockchain.mine_stop =False
     nonce = blockchain.proof_of_work()
 
     # We must receive a reward for finding the proof.
@@ -289,6 +309,7 @@ def mine():
         'nonce': block['nonce'],
         'previous_hash': block['previous_hash'],
     }
+    notify_complete()
     return jsonify(response), 200
 
 
@@ -345,11 +366,3 @@ if __name__ == '__main__':
     port = args.port
 
     app.run(host='127.0.0.1', port=port)
-
-
-
-
-
-
-
-
