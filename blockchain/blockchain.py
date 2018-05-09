@@ -2,9 +2,10 @@
 title           : blockchain.py
 description     : A blockchain implemenation
 author          : Adil Moujahid
+Modified        : Johan Murillo, Santiago Chaustre
 date_created    : 20180212
 date_modified   : 20180309
-version         : 0.5
+version         : 1
 usage           : python blockchain.py
                   python blockchain.py -p 5000
                   python blockchain.py --port 5000
@@ -379,7 +380,9 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('-p', '--port', default=5000, type=int, help='port to listen on')
+    parser.add_argument('-i', '--host', default='0.0.0.0', type=str, help='host to listen on')
     args = parser.parse_args()
     port = args.port
+    host = args.host
 
-    app.run(host='0.0.0.0', port=port)
+    app.run(host=host, port=port )
