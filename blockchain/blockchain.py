@@ -9,9 +9,9 @@ usage           : python blockchain.py
                   python blockchain.py -p 5000
                   python blockchain.py --port 5000
 python_version  : 3.6.1
-Comments        : The blockchain implementation is mostly based on [1]. 
-                  I made a few modifications to the original code in order to add RSA encryption to the transactions 
-                  based on [2], changed the proof of work algorithm, and added some Flask routes to interact with the 
+Comments        : The blockchain implementation is mostly based on [1].
+                  I made a few modifications to the original code in order to add RSA encryption to the transactions
+                  based on [2], changed the proof of work algorithm, and added some Flask routes to interact with the
                   blockchain from the dashboards
 References      : [1] https://github.com/dvf/blockchain/blob/master/blockchain.py
                   [2] https://github.com/julienr/ipynb_playground/blob/master/bitcoin/dumbcoin/dumbcoin.ipynb
@@ -47,7 +47,7 @@ MINING_DIFFICULTY = 2
 class Blockchain:
 
     def __init__(self):
-        
+
         self.transactions = []
         self.chain = []
         self.nodes = set()
@@ -87,7 +87,7 @@ class Blockchain:
         """
         Add a transaction to transactions array if the signature verified
         """
-        transaction = OrderedDict({'sender_address': sender_address, 
+        transaction = OrderedDict({'sender_address': sender_address,
                                     'recipient_address': recipient_address,
                                     'value': value})
 
@@ -128,7 +128,7 @@ class Blockchain:
         """
         # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
         block_string = json.dumps(block, sort_keys=True).encode()
-        
+
         return hashlib.sha256(block_string).hexdigest()
 
 
@@ -344,12 +344,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     port = args.port
 
-    app.run(host='127.0.0.1', port=port)
-
-
-
-
-
-
-
-
+    app.run(host='0.0.0.0', port=port)
