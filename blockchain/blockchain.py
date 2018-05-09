@@ -220,6 +220,8 @@ class Blockchain:
 
         return False
 
+    def clear_transactions(self):
+        self.transactions = []
 # Instantiate the Node
 app = Flask(__name__)
 CORS(app)
@@ -274,6 +276,7 @@ def full_chain():
 @app.route('/stop_mine', methods=['POST'])
 def stop_mine():
     blockchain.mine_stop = True
+    blockchain.clear_transactions()
     response = {
         'message' : "ok"
     }
