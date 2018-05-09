@@ -41,7 +41,7 @@ from flask_cors import CORS
 
 MINING_SENDER = "THE BLOCKCHAIN"
 MINING_REWARD = 1
-MINING_DIFFICULTY = 2
+MINING_DIFFICULTY = 5
 
 
 class Blockchain:
@@ -270,7 +270,7 @@ def full_chain():
     }
     return jsonify(response), 200
 
-@app.route('/stop_mine', methods['POST'])
+@app.route('/stop_mine', methods=['POST'])
 def stop_mine():
     blockchain.mine_stop = True
     response = {
