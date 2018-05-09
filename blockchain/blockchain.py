@@ -143,7 +143,8 @@ class Blockchain:
         nonce = 0
         while (self.mine_stop is False) and (self.valid_proof(self.transactions, last_hash, nonce)  is False):
             nonce += 1
-
+        if self.mine_stop is True:
+            return -1
         return nonce
 
 
@@ -206,7 +207,7 @@ class Blockchain:
             if response.status_code == 200:
                 length = response.json()['length']
                 chain = response.json()['chain']
-
+                print ("compara longitures la mia es ", max_length, " la del otro", length)
                 # Check if the length is longer and the chain is valid
                 if length > max_length and self.valid_chain(chain):
                     max_length = length
@@ -282,7 +283,7 @@ def stop_mine():
 def notify_complete():
     nodes = list(blockchain.nodes)
     for node in nodes:
-        request.post('http://'+node+'/stop_mine')
+        requests.post('http://'+node+'/stop_mine')
     response = {
         'message' : "ok"
     }
@@ -294,7 +295,12 @@ def mine():
     last_block = blockchain.chain[-1]
     blockchain.mine_stop =False
     nonce = blockchain.proof_of_work()
-
+    if nonce == -1 :
+        response = {
+            'message': "Not block Forged",
+            'nonce': '',
+        }
+        return jsonify(response), 200
     # We must receive a reward for finding the proof.
     blockchain.submit_transaction(sender_address=MINING_SENDER, recipient_address=blockchain.node_id, value=MINING_REWARD, signature="")
 
