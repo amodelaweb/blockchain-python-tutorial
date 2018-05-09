@@ -364,6 +364,14 @@ def get_nodes():
     response = {'nodes': nodes}
     return jsonify(response), 200
 
+@app.route('/get_info', methods=['GET'])
+def get_info():
+
+    response = {
+        'node_id': blockchain.node_id
+    }
+    return jsonify(response), 200
+
 
 
 if __name__ == '__main__':
