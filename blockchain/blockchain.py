@@ -41,7 +41,7 @@ from flask_cors import CORS
 
 MINING_SENDER = "THE BLOCKCHAIN"
 MINING_REWARD = 1
-MINING_DIFFICULTY = 2
+MINING_DIFFICULTY = 5
 
 
 class Blockchain:
@@ -55,6 +55,7 @@ class Blockchain:
         self.node_id = str(uuid4()).replace('-', '')
         #Create genesis block
         self.create_block(0, '00')
+        self.mine_stop = False
 
 
     def register_node(self, node_url):
@@ -140,9 +141,10 @@ class Blockchain:
         last_hash = self.hash(last_block)
 
         nonce = 0
-        while self.valid_proof(self.transactions, last_hash, nonce) is False:
+        while (self.mine_stop is False) and (self.valid_proof(self.transactions, last_hash, nonce)  is False):
             nonce += 1
-
+        if self.mine_stop is True:
+            return -1
         return nonce
 
 
@@ -205,7 +207,7 @@ class Blockchain:
             if response.status_code == 200:
                 length = response.json()['length']
                 chain = response.json()['chain']
-
+                print ("compara longitures la mia es ", max_length, " la del otro", length)
                 # Check if the length is longer and the chain is valid
                 if length > max_length and self.valid_chain(chain):
                     max_length = length
@@ -218,6 +220,8 @@ class Blockchain:
 
         return False
 
+    def clear_transactions(self):
+        self.transactions = []
 # Instantiate the Node
 app = Flask(__name__)
 CORS(app)
@@ -269,12 +273,37 @@ def full_chain():
     }
     return jsonify(response), 200
 
+@app.route('/stop_mine', methods=['POST'])
+def stop_mine():
+    blockchain.mine_stop = True
+    blockchain.clear_transactions()
+    response = {
+        'message' : "ok"
+    }
+    return jsonify(response), 200
+
+@app.route('/notify_complete', methods=['GET'])
+def notify_complete():
+    nodes = list(blockchain.nodes)
+    for node in nodes:
+        requests.post('http://'+node+'/stop_mine')
+    response = {
+        'message' : "ok"
+    }
+    return jsonify(response), 200
+
 @app.route('/mine', methods=['GET'])
 def mine():
     # We run the proof of work algorithm to get the next proof...
     last_block = blockchain.chain[-1]
+    blockchain.mine_stop =False
     nonce = blockchain.proof_of_work()
-
+    if nonce == -1 :
+        response = {
+            'message': "Not block Forged",
+            'nonce': '',
+        }
+        return jsonify(response), 200
     # We must receive a reward for finding the proof.
     blockchain.submit_transaction(sender_address=MINING_SENDER, recipient_address=blockchain.node_id, value=MINING_REWARD, signature="")
 
@@ -289,6 +318,7 @@ def mine():
         'nonce': block['nonce'],
         'previous_hash': block['previous_hash'],
     }
+    notify_complete()
     return jsonify(response), 200
 
 
@@ -332,6 +362,14 @@ def consensus():
 def get_nodes():
     nodes = list(blockchain.nodes)
     response = {'nodes': nodes}
+    return jsonify(response), 200
+
+@app.route('/get_info', methods=['GET'])
+def get_info():
+
+    response = {
+        'node_id': blockchain.node_id
+    }
     return jsonify(response), 200
 
 
