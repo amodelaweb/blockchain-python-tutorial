@@ -44,8 +44,7 @@ class Transaction:
     def to_dict(self):
         return OrderedDict({'sender_address': self.sender_address,
                             'recipient_address': self.recipient_address,
-                            'value': self.value,
-                            'timestamp': datetime.datetime.now() })
+                            'value': self.value  })
 
     def sign_transaction(self):
         """

@@ -108,7 +108,7 @@ class Blockchain:
         """
         Add a transaction to transactions array if the signature verified
         """
-        if self.get_balance(sender_address) < float(value) and sender_address != "THE BLOCKCHAIN":
+        if self.get_balance(sender_address) < float(value) and sender_address != MINING_SENDER:
             return False
         print("\nITs aliveee", value,"<=",self.get_balance(sender_address))
 
