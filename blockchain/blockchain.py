@@ -17,7 +17,6 @@ Comments        : The blockchain implementation is mostly based on [1].
 References      : [1] https://github.com/dvf/blockchain/blob/master/blockchain.py
                   [2] https://github.com/julienr/ipynb_playground/blob/master/bitcoin/dumbcoin/dumbcoin.ipynb
 '''
-
 from collections import OrderedDict
 
 import binascii
@@ -42,7 +41,7 @@ from flask_cors import CORS
 
 MINING_SENDER = "THE BLOCKCHAIN"
 MINING_REWARD = 1
-MINING_DIFFICULTY = 5
+MINING_DIFFICULTY = 1
 
 
 class Blockchain:
@@ -53,7 +52,10 @@ class Blockchain:
         self.chain = []
         self.nodes = set()
         #Generate random number to be used as node_id
-        self.node_id = str(uuid4()).replace('-', '')
+        random_gen = Crypto.Random.new().read
+        self.__private_key_hide = RSA.generate(1024, random_gen)
+        self.private_key = binascii.hexlify(self.__private_key_hide.exportKey(format='DER')).decode('ascii')
+        self.node_id = binascii.hexlify(self.__private_key_hide.publickey().exportKey(format='DER')).decode('ascii')
         #Create genesis block
         self.create_block(0, '00')
         self.mine_stop = False
@@ -73,6 +75,19 @@ class Blockchain:
         else:
             raise ValueError('Invalid URL')
 
+    def get_balance(self,sender_address):
+        """
+        Return the balance of an user
+        """
+        cont = 0
+        print("prim--------->",sender_address)
+        for x in self.chain:
+            for y in x["transactions"] :
+                print("sender addr -->", y["recipient_address"])
+                if y["recipient_address"] == sender_address:
+                    cont += y["value"]
+        return cont
+
 
     def verify_transaction_signature(self, sender_address, signature, transaction):
         """
@@ -89,6 +104,8 @@ class Blockchain:
         """
         Add a transaction to transactions array if the signature verified
         """
+        if self.get_balance(sender_address) < float(value) and sender_address != "THE BLOCKCHAIN":
+            return False
         transaction = OrderedDict({'sender_address': sender_address,
                                     'recipient_address': recipient_address,
                                     'value': value})
@@ -239,7 +256,6 @@ def configure():
     return render_template('./configure.html')
 
 
-
 @app.route('/transactions/new', methods=['POST'])
 def new_transaction():
     values = request.form
@@ -322,8 +338,6 @@ def mine():
     notify_complete()
     return jsonify(response), 200
 
-
-
 @app.route('/nodes/register', methods=['POST'])
 def register_nodes():
     values = request.form
@@ -341,7 +355,6 @@ def register_nodes():
     }
     return jsonify(response), 201
 
-
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
     replaced = blockchain.resolve_conflicts()
@@ -358,7 +371,6 @@ def consensus():
         }
     return jsonify(response), 200
 
-
 @app.route('/nodes/get', methods=['GET'])
 def get_nodes():
     nodes = list(blockchain.nodes)
@@ -367,13 +379,20 @@ def get_nodes():
 
 @app.route('/get_info', methods=['GET'])
 def get_info():
-
     response = {
+        'private_key': blockchain.private_key,
         'node_id': blockchain.node_id
     }
     return jsonify(response), 200
 
-
+@app.route('/test', methods=['GET'])
+def test():
+    values = request.form
+    value = blockchain.get_balance(values['sender_address'])
+    response = {
+        'amount': value,
+    }
+    return jsonify(response), 200
 
 if __name__ == '__main__':
     from argparse import ArgumentParser

@@ -2,7 +2,7 @@
 title           : blockchain_client.py
 description     : A blockchain client implemenation, with the following features
                   - Wallets generation using Public/Private key encryption (based on RSA algorithm)
-                  - Generation of transactions with RSA encryption      
+                  - Generation of transactions with RSA encryption
 author          : Adil Moujahid
 date_created    : 20180212
 date_modified   : 20180309
@@ -24,6 +24,7 @@ import Crypto.Random
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
+import datetime
 
 import requests
 from flask import Flask, jsonify, request, render_template
@@ -43,7 +44,8 @@ class Transaction:
     def to_dict(self):
         return OrderedDict({'sender_address': self.sender_address,
                             'recipient_address': self.recipient_address,
-                            'value': self.value})
+                            'value': self.value,
+                            'timestamp': datetime.datetime.now() })
 
     def sign_transaction(self):
         """
@@ -84,7 +86,7 @@ def new_wallet():
 
 @app.route('/generate/transaction', methods=['POST'])
 def generate_transaction():
-	
+
 	sender_address = request.form['sender_address']
 	sender_private_key = request.form['sender_private_key']
 	recipient_address = request.form['recipient_address']
@@ -102,7 +104,9 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('-p', '--port', default=8080, type=int, help='port to listen on')
+    parser.add_argument('-i', '--host', default='0.0.0.0', type=str, help='host to listen on')
     args = parser.parse_args()
     port = args.port
+    host = args.host
 
-    app.run(host='127.0.0.1', port=port)
+    app.run(host=host, port=port)
