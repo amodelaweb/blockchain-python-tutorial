@@ -86,6 +86,10 @@ class Blockchain:
                 print("sender addr -->", y["recipient_address"])
                 if y["recipient_address"] == sender_address:
                     cont += y["value"]
+
+                if y["sender_address"] == sender_address:
+                    cont -= y["value"]
+        print("el tot de ",sender_address, " es ",cont)
         return cont
 
 
@@ -106,6 +110,8 @@ class Blockchain:
         """
         if self.get_balance(sender_address) < float(value) and sender_address != "THE BLOCKCHAIN":
             return False
+        print("\nITs aliveee", value,"<=",self.get_balance(sender_address))
+
         transaction = OrderedDict({'sender_address': sender_address,
                                     'recipient_address': recipient_address,
                                     'value': value})
@@ -113,12 +119,15 @@ class Blockchain:
         #Reward for mining a block
         if sender_address == MINING_SENDER:
             self.transactions.append(transaction)
+            print("ITS aliveeee att THe BLOCKCHAIN")
             return len(self.chain) + 1
         #Manages transactions from wallet to another wallet
         else:
             transaction_verification = self.verify_transaction_signature(sender_address, signature, transaction)
+            print("verify_transaction_signature ---.-...----" , transaction_verification)
             if transaction_verification:
                 self.transactions.append(transaction)
+                print("ITS aliveeees nder_address",sender_address)
                 return len(self.chain) + 1
             else:
                 return False
@@ -266,12 +275,13 @@ def new_transaction():
         return 'Missing values', 400
     # Create a new Transaction
     transaction_result = blockchain.submit_transaction(values['sender_address'], values['recipient_address'], values['amount'], values['signature'])
-
+    print("result OF TRANSACTION ############",transaction_result)
     if transaction_result == False:
         response = {'message': 'Invalid Transaction!'}
         return jsonify(response), 406
     else:
         response = {'message': 'Transaction will be added to Block '+ str(transaction_result)}
+        print("END OF TRANSACTION ############",response)
         return jsonify(response), 201
 
 @app.route('/transactions/get', methods=['GET'])
